@@ -11,6 +11,7 @@ import plotly.express as px
 # model
 from model import prediction
 from sklearn.svm import SVR
+import requests
 
 
 def get_stock_price_fig(df):
@@ -45,9 +46,9 @@ app.layout = html.Div(
         html.Div(
             [
                 # Navigation
-                html.P("Welcome to the Stock Dash App!", className="start"),
+                html.P("Welcome to StockLens", className="start"),
                 html.Div([
-                    html.P("Input stock code: "),
+                    html.P("Stock code: "),
                     html.Div([
                         dcc.Input(id="dropdown_tickers", type="text"),
                         html.Button("Submit", id='submit'),
@@ -110,19 +111,29 @@ app.layout = html.Div(
 ], [Input("submit", "n_clicks")], [State("dropdown_tickers", "value")])
 def update_data(n, val):  # inpur parameter(s)
     if n == None:
-        return "Hey there! Please enter a legitimate stock code to get details.", "https://melmagazine.com/wp-content/uploads/2019/07/Screen-Shot-2019-07-31-at-5.47.12-PM.png", "Stonks", None, None, None
+        return " Please enter a valid stock code to get details.", "/assets/bg.jpeg", "StockLens", None, None, None
         # raise PreventUpdate
     else:
         if val == None:
             raise PreventUpdate
         else:
             ticker = yf.Ticker(val)
-            inf = ticker.info
-            df = pd.DataFrame().from_dict(inf, orient="index").T
-            df[['logo_url', 'shortName', 'longBusinessSummary']]
-            return df['longBusinessSummary'].values[0], df['logo_url'].values[
-                0], df['shortName'].values[0], None, None, None
-
+            info = ticker.info
+            # Print available keys for debugging
+            print(info.keys())
+            
+            # Safely get values with defaults
+            logo_url = info.get('symbol', '/assets/bg.jpeg')  # Assuming 'symbol' contains the link to the company logo
+            company_name = info.get('shortName', 'Company Name Not Available')
+            long_summary = info.get('longBusinessSummary', "No summary available for this stock.")
+            
+            # Set a default description if long summary is not available
+            if long_summary and long_summary.strip():  # Check if long_summary is not empty or only whitespace
+                description = long_summary
+            else:
+                description = "No summary available for this stock."
+            
+            return description, '/assets/apple.png', "Company Name: "+ company_name, None, None, None
 
 # callback for stocks graphs
 @app.callback([
